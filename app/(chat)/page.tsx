@@ -8,6 +8,9 @@ import { DataStreamHandler } from '@/components/data-stream-handler';
 import { auth } from '../(auth)/auth';
 import { redirect } from 'next/navigation';
 
+// Required for next-electron-rsc to ensure server-side rendering
+export const dynamic = 'force-dynamic';
+
 export default async function Page() {
   const session = await auth();
 

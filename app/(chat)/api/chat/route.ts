@@ -1,3 +1,6 @@
+// Required for next-electron-rsc to ensure server-side rendering
+export const dynamic = 'force-dynamic';
+
 import {
   APICallError,
   appendClientMessage,

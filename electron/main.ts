@@ -1,11 +1,11 @@
 import path from 'node:path';
 import { fileURLToPath, parse } from 'node:url';
 import { createServer } from 'node:http';
-import { app, BrowserWindow, Menu, shell, screen } from 'electron';
+import { app, BrowserWindow, Menu, shell, screen, protocol } from 'electron';
 import defaultMenu from 'electron-default-menu';
 import dotenv from 'dotenv';
-import next from 'next';
 import { WebLLMMiddleware } from 'web-llm-middleware';
+import { createHandler } from 'next-electron-rsc';
 
 // Get the directory name of the current module
 const appPath = app.getAppPath();
@@ -35,10 +35,21 @@ const turbo = Boolean(process.env.VERCEL_TURBO_PACK === 'true' || false); // Pac
 const devTools = !dev && !app.isPackaged; // Enable devTools only in development mode and when not packaged
 
 let mainWindow: BrowserWindow | null = null;
+let stopIntercept: (() => void) | undefined;
 
 console.log(
   `[Electron] Starting with environment: dev:${dev}, port:${port}, turbo:${turbo}, devTools:${devTools}`,
 );
+
+// Initialize next-electron-rsc handler
+const dir = dev ? appPath : path.join(appPath, '.next', 'standalone', 'ai-chatbot-desktop');
+const { createInterceptor, localhostUrl } = createHandler({
+  dev,
+  dir,
+  protocol,
+  debug: true,
+  turbo,
+});
 
 const createWindow = async () => {
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -63,6 +74,7 @@ const createWindow = async () => {
   // }
 
   mainWindow.on('closed', () => {
+    stopIntercept?.();
     mainWindow = null;
   });
 
@@ -97,20 +109,16 @@ const createWindow = async () => {
       `[Electron] Loaded WebLLM at http://localhost:15408 in ${dev ? 'development' : 'production'} mode`,
     );
 
-    const nextAppURL = app.isPackaged
-      ? await startNextApp({
-          port,
-          dev,
-          turbo,
-          root: appPath,
-        })
-      : `http://localhost:${port}`;
+    // Use next-electron-rsc instead of manual HTTP server
+    stopIntercept = await createInterceptor({
+      session: mainWindow.webContents.session,
+    });
 
     console.log(
-      `[Electron] Loaded Next.js app at ${nextAppURL} in ${dev ? 'development' : 'production'} mode`,
+      `[Electron] Loaded Next.js app with next-electron-rsc at ${localhostUrl} in ${dev ? 'development' : 'production'} mode`,
     );
 
-    await mainWindow.loadURL(nextAppURL);
+    await mainWindow.loadURL(localhostUrl + '/');
   } catch (error: unknown) {
     console.error(`[Electron] Error initializing server: ${error}`);
 
@@ -135,48 +143,8 @@ function isLocalhostURL(url: string) {
   return url.startsWith('http://localhost');
 }
 
+// NOTE: Removed startNextApp - now using next-electron-rsc instead of manual HTTP server
 // Refer to https://github.com/zaidmukaddam/scira-mcp-chat/blob/desktop/electron/main.ts#L24
-async function startNextApp({
-  port,
-  dev,
-  turbo,
-  root,
-}: {
-  port: number;
-  dev: boolean;
-  turbo: boolean;
-  root: string;
-}) {
-  return new Promise<string>((resolve, reject) => {
-    try {
-      // next start doesn't support standalocne
-      const app = next({
-        dev,
-        dir: root,
-        hostname: 'localhost',
-        port,
-        turbo,
-      });
-
-      app.prepare().then(() => {
-        const handler = app.getRequestHandler();
-
-        const server = createServer((req, res) => {
-          const parsedUrl = parse(req.url ?? '/', true);
-          handler(req, res, parsedUrl);
-        });
-
-        server.listen(port, () => resolve(`http://localhost:${port}`));
-      });
-    } catch (error) {
-      reject(
-        new Error(
-          `Failed to start Next.js app: ${error instanceof Error ? error.message : String(error)}`,
-        ),
-      );
-    }
-  });
-}
 
 async function startWebLLM({
   dev,

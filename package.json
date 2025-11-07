@@ -101,6 +101,7 @@
     "nanoid": "^5.0.8",
     "next": "15.3.0-canary.31",
     "next-auth": "5.0.0-beta.25",
+    "next-electron-rsc": "^0.3.0",
     "next-themes": "^0.3.0",
     "ollama-ai-provider": "^1.2.0",
     "orderedmap": "^2.1.1",
