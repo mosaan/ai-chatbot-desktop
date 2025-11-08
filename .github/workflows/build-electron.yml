@@ -66,6 +66,17 @@ jobs:
       - name: Compile Electron TypeScript
         run: pnpm tsc --project ./electron
 
+      - name: Verify Electron build
+        shell: bash
+        run: |
+          echo "Checking .electron directory contents:"
+          ls -la .electron/ || echo ".electron directory not found"
+          if [ ! -f .electron/main.js ]; then
+            echo "ERROR: .electron/main.js not found!"
+            exit 1
+          fi
+          echo "✓ .electron/main.js exists"
+
       - name: Build Electron app (Windows)
         run: pnpm exec electron-builder --win
         env:

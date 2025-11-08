@@ -39,7 +39,7 @@
       "!.next/standalone/**/node_modules/electron",
       ".next/static",
       "public",
-      ".electron",
+      ".electron/**/*",
       "package.json",
       ".env"
     ],
