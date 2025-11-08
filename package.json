@@ -34,14 +34,20 @@
     "asar": false,
     "productName": "Chatbot AI SDK for Desktop",
     "files": [
-      "next.config.ts",
-      ".next/standalone/ai-chatbot-desktop/**/*",
-      "!.next/standalone/ai-chatbot-desktop/node_modules/electron",
-      ".next/static/**/*",
-      "public/**",
-      ".electron/**",
+      "next.config.{js,ts}",
+      ".next/standalone/**/*",
+      "!.next/standalone/**/node_modules/electron",
+      ".next/static",
+      "public",
+      ".electron",
       "package.json",
       ".env"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/static",
+        "to": ".next/static"
+      }
     ],
     "mac": {
       "target": "dmg",

@@ -57,27 +57,42 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run database migrations
-        run: pnpm db:migrate
+      - name: Create dummy .env file
+        shell: bash
+        run: |
+          cat > .env << 'EOF'
+          # Dummy environment variables for build
+          AUTH_SECRET=dummy-secret-for-build-only-minimum-32-characters-long
+          POSTGRES_URL=postgresql://dummy:dummy@localhost:5432/dummy
+          POSTGRES_PRISMA_URL=postgresql://dummy:dummy@localhost:5432/dummy?pgbouncer=true&connect_timeout=15
+          POSTGRES_URL_NO_SSL=postgresql://dummy:dummy@localhost:5432/dummy
+          POSTGRES_URL_NON_POOLING=postgresql://dummy:dummy@localhost:5432/dummy
+          EOF
 
-      - name: Build Next.js app
-        run: pnpm build
+      - name: Build Next.js app (skip migrations)
+        run: pnpm next build
+        env:
+          SKIP_ENV_VALIDATION: true
+
+      - name: Compile Electron TypeScript
+        run: pnpm tsc --project ./electron
 
       - name: Build Electron app (Windows)
         if: matrix.platform == 'win'
-        run: pnpm build:e --win
+        run: pnpm exec electron-builder --win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron app (macOS)
         if: matrix.platform == 'mac'
-        run: pnpm build:e --mac
+        run: pnpm exec electron-builder --mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Build Electron app (Linux)
         if: matrix.platform == 'linux'
-        run: pnpm tsc --project ./electron && pnpm exec electron-builder --linux
+        run: pnpm exec electron-builder --linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -90,6 +105,7 @@ jobs:
             dist/*.exe
             dist/*.msi
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Upload macOS artifacts
         if: matrix.platform == 'mac'
@@ -100,6 +116,7 @@ jobs:
             dist/*.dmg
             dist/*.zip
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Upload Linux artifacts
         if: matrix.platform == 'linux'
@@ -111,6 +128,7 @@ jobs:
             dist/*.deb
             dist/*.rpm
           retention-days: 30
+          if-no-files-found: warn
 
   release:
     needs: build
