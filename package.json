@@ -10,7 +10,10 @@
     "start": "next start",
     "dev:e": "tsc-watch --noClear --onFirstSuccess 'electron .' --project ./electron",
     "dev:e:debug-brk": "tsc-watch --noClear --onFirstSuccess 'electron --inspect-brk .' --project ./electron",
-    "build:e": "tsc --project ./electron && electron-builder --mac",
+    "build:e": "tsc --project ./electron && electron-builder",
+    "build:e:win": "tsc --project ./electron && electron-builder --win",
+    "build:e:mac": "tsc --project ./electron && electron-builder --mac",
+    "build:e:linux": "tsc --project ./electron && electron-builder --linux",
     "start:e": "electron .",
     "open": "./dist/mac-arm64/Chatbot\\ AI\\ SDK\\ for\\ Desktop.app/Contents/MacOS/Chatbot\\ AI\\ SDK\\ for\\ Desktop",
     "clean": "rm -rf .next .electron dist",
@@ -28,13 +31,14 @@
   },
   "build": {
     "appId": "chat-sdk.ai-desktop",
-    "asar": true,
+    "asar": false,
     "productName": "Chatbot AI SDK for Desktop",
     "files": [
-      "next.config.js",
-      ".next/**",
+      "next.config.ts",
+      ".next/standalone/ai-chatbot-desktop/**/*",
+      "!.next/standalone/ai-chatbot-desktop/node_modules/electron",
+      ".next/static/**/*",
       "public/**",
-      "node_modules/**",
       ".electron/**",
       "package.json",
       ".env"
@@ -48,6 +52,30 @@
       "extendInfo": {
         "CFBundleName": "Chatbot AI SDK for Desktop"
       }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icons/chatbot.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "target": ["AppImage", "deb", "rpm"],
+      "category": "Utility",
+      "icon": "public/icons/chatbot.png"
     }
   },
   "dependencies": {

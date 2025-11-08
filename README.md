@@ -42,6 +42,14 @@
 - Add WebLLM for LocalLLM.
   - You might need 'pnpm exec playwright install' to finish the web-llm-middelware installation
 
+### Nov 8, 2025
+
+- Migrated to next-electron-rsc for IPC-based communication
+  - Replaced manual HTTP server with protocol interceptor
+  - Maintains full MCP compatibility with server-side execution
+  - Added Windows, macOS, and Linux build configurations
+- Added automated GitHub Actions workflow for building desktop binaries
+
 ## Features
 
 - [Next.js](https://nextjs.org) App Router
@@ -86,3 +94,55 @@ pnpm dev
 ```
 
 Your app template should now be running on [localhost:3000](http://localhost:3000).
+
+## Building Desktop Apps
+
+### Download Pre-built Binaries
+
+Pre-built desktop applications are automatically generated for Windows, macOS, and Linux through GitHub Actions. You can download them from the [Releases](https://github.com/mosaan/ai-chatbot-desktop/releases) page or the [Actions](https://github.com/mosaan/ai-chatbot-desktop/actions) tab.
+
+**Available formats:**
+- **Windows**: NSIS installer (`.exe`), Portable (`.exe`)
+- **macOS**: DMG (`.dmg`)
+- **Linux**: AppImage (`.AppImage`), Debian package (`.deb`), RPM package (`.rpm`)
+
+### Building Locally
+
+#### Development Mode
+
+Run the Electron app in development mode:
+
+```bash
+pnpm dev:e
+```
+
+This will start the app with hot-reload enabled for both Next.js and Electron.
+
+#### Production Build
+
+Build the desktop application for your platform:
+
+```bash
+# Build Next.js app first
+pnpm build
+
+# Build for your current platform
+pnpm build:e
+
+# Or build for specific platforms
+pnpm build:e:win    # Windows
+pnpm build:e:mac    # macOS
+pnpm build:e:linux  # Linux
+```
+
+Built applications will be available in the `dist/` directory.
+
+#### Build Configuration
+
+The build configuration in `package.json` includes:
+
+- **Windows**: NSIS installer (x64/ARM64) and portable executable
+- **macOS**: DMG installer
+- **Linux**: AppImage, Debian, and RPM packages
+
+The application uses `next-electron-rsc` for IPC-based communication between Electron and Next.js, eliminating the need for HTTP servers and providing better integration with React Server Components.
