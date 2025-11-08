@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import type { Configuration } from 'webpack';
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -16,6 +17,18 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
+  },
+  webpack: (config: Configuration, { isServer }: { isServer: boolean }) => {
+    if (!isServer) {
+      // Exclude test utilities from client-side bundles
+      config.resolve = config.resolve || {};
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        './models.test': false,
+        './models.test.js': false,
+      };
+    }
+    return config;
   },
 };
 
